@@ -1,3 +1,4 @@
+# NOTE: version指定するとエラーになる
 # # -----------------
 # # Terraform configurrations
 # # -----------------
