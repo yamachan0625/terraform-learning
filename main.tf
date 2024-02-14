@@ -2,15 +2,21 @@
 # # -----------------
 # # Terraform configurrations
 # # -----------------
-# terraform {
-#   required_version = "1.7.2"
-#   required_providers {
-#     aws = {
-#       source  = "hashicorp/aws"
-#       version = "~>3.0"
-#     }
-#   }
-# }
+terraform {
+  # required_version = "1.7.2"
+  # required_providers {
+  #   aws = {
+  #     source  = "hashicorp/aws"
+  #     version = "~>3.0"
+  #   }
+  # }
+  backend "s3" {
+    bucket  = "tastylog-tfstate-bucket-009"
+    key     = "tastylog-dev.tfstate"
+    region  = "ap-northeast-1"
+    profile = "terraform"
+  }
+}
 
 # # -----------------
 # # Provider
