@@ -1,4 +1,37 @@
 # # -----------------
+# # SSM Parameter Store
+# # -----------
+# resource "aws_ssm_parameter" "host" {
+#   name  = "${var.project}/${var.environment}/app/MYSQL_HOST"
+#   type  = "String"
+#   value = aws_db_instance.mysql_standalone.address
+# }
+
+# resource "aws_ssm_parameter" "port" {
+#   name  = "${var.project}/${var.environment}/app/MYSQL_PORT"
+#   type  = "String"
+#   value = aws_db_instance.mysql_standalone.port
+# }
+
+# resource "aws_ssm_parameter" "database" {
+#   name  = "${var.project}/${var.environment}/app/MYSQL_DATABASE"
+#   type  = "String"
+#   value = aws_db_instance.mysql_standalone.db_name
+# }
+
+# resource "aws_ssm_parameter" "username" {
+#   name  = "${var.project}/${var.environment}/app/MYSQL_USERNAME"
+#   type  = "SecureString"
+#   value = aws_db_instance.mysql_standalone.username
+# }
+
+# resource "aws_ssm_parameter" "password" {
+#   name  = "${var.project}/${var.environment}/app/MYSQL_PASSWORD"
+#   type  = "SecureString"
+#   value = aws_db_instance.mysql_standalone.password
+# }
+
+# # -----------------
 # # key apair
 # # -----------
 resource "aws_key_pair" "keypair" {
@@ -33,34 +66,39 @@ resource "aws_instance" "app_server" {
 }
 
 # # -----------------
-# # SSM Parameter Store
+# # launch configuration
 # # -----------
-# resource "aws_ssm_parameter" "host" {
-#   name  = "${var.project}/${var.environment}/app/MYSQL_HOST"
-#   type  = "String"
-#   value = aws_db_instance.mysql_standalone.address
-# }
+resource "aws_launch_template" "app_lt" {
+  update_default_version = true
 
-# resource "aws_ssm_parameter" "port" {
-#   name  = "${var.project}/${var.environment}/app/MYSQL_PORT"
-#   type  = "String"
-#   value = aws_db_instance.mysql_standalone.port
-# }
+  name          = "${var.project}-${var.environment}-app-lt"
+  image_id      = data.aws_ami.app.id
+  instance_type = "t2.micro"
+  key_name      = aws_key_pair.keypair.key_name
 
-# resource "aws_ssm_parameter" "database" {
-#   name  = "${var.project}/${var.environment}/app/MYSQL_DATABASE"
-#   type  = "String"
-#   value = aws_db_instance.mysql_standalone.db_name
-# }
+  tag_specifications {
+    resource_type = "instance"
+    tags = {
+      Name    = "${var.project}-${var.environment}-app-ec2"
+      Project = var.project
+      Env     = var.environment
+      Type    = "app"
+    }
+  }
 
-# resource "aws_ssm_parameter" "username" {
-#   name  = "${var.project}/${var.environment}/app/MYSQL_USERNAME"
-#   type  = "SecureString"
-#   value = aws_db_instance.mysql_standalone.username
-# }
+  network_interfaces {
+    associate_public_ip_address = true
+    device_index                = 0
+    subnet_id                   = aws_subnet.public_subnet_1a.id
+    security_groups             = [aws_security_group.app_sg.id, aws_security_group.opmng_sg.id]
+    delete_on_termination       = true
+  }
+  iam_instance_profile {
+    name = aws_iam_instance_profile.app_ec2_profile.name
+  }
 
-# resource "aws_ssm_parameter" "password" {
-#   name  = "${var.project}/${var.environment}/app/MYSQL_PASSWORD"
-#   type  = "SecureString"
-#   value = aws_db_instance.mysql_standalone.password
-# }
+  // 起動時に実行するスクリプト
+  # user_data = {
+  # }
+
+}
